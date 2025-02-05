@@ -41,7 +41,9 @@ class IRCClient:
         except Exception as e:
             print("Error al enviar mensaje:", e)
             
-            
+    
+    def send_pong(self, data):
+        self.socket.sendall(f"PONG {data}\r\n".encode())
             
             
     def handle_privmsg(self, parts):
@@ -93,3 +95,74 @@ class IRCClient:
         user_kicked = parts[3]
         reason = " ".join(parts[4:]).lstrip(':')
         print(f"{user_kicked} ha sido expulsado de {channel} por la razón: {reason}")
+        
+    
+    def handle_mode(self, parts):
+        source = parts[0][1:]
+        channel_or_user = parts[2]
+        mode_changes = parts[3:]
+
+        # Imprime o procesa el cambio de modo
+        print(f"{source} cambió el modo de {channel_or_user} a {' '.join(mode_changes)}")
+
+
+    def handle_nick_change(self, parts):
+        old_nick = parts[0][1:].split('!')[0]
+        new_nick = parts[2].lstrip(':')
+        if old_nick == self.nickname:
+            self.nickname = new_nick  # Actualiza el nickname almacenado
+            print(f"Tu nickname ha sido cambiado a {new_nick}.")
+        else:
+            print(f"{old_nick} ahora es conocido como {new_nick}.")
+            
+            
+    def handle_whois_response(self, parts):
+        code = parts[1]
+        if code == "311":  # Respuesta WHOIS con información del usuario
+            nickname = parts[3]
+            username = parts[4]
+            hostname = parts[5]
+            realname = ' '.join(parts[7:])[1:]
+            print(f"Usuario {nickname} ({realname}) está en {hostname}")
+        elif code == "319":  # Canales en los que el usuario está
+            nickname = parts[3]
+            channels = ' '.join(parts[4:])[1:]
+            print(f"{nickname} está en los canales {channels}")
+    
+    
+    def handle_numeric_response(self, parts):
+        code = parts[1]
+        if code == "322":  # Respuesta a LIST
+            channel = parts[3]
+            user_count = parts[4]
+            topic = ' '.join(parts[5:])[1:]
+            print(f"Canal: {channel} ({user_count} usuarios) - Tema: {topic}")
+        elif code == "323":  # Fin de la lista LIST
+            print("Fin de la lista de canales.")
+        elif code == "353":  # Respuesta a NAMES
+            channel = parts[4]
+            names = ' '.join(parts[5:])[1:]
+            print(f"Usuarios en {channel}: {names}")
+        elif code == "366":  # Fin de la lista NAMES
+            channel = parts[3]
+            print(f"Fin de la lista de usuarios en {channel}.")
+        elif code == "433":
+            print("El nickname deseado está en uso o es inválido.")
+        elif code == "431":  # Sin nickname dado
+            print("No se ha proporcionado un nickname.")
+        elif code == "432":  # Erroneous Nickname
+            print("El nickname es inválido.")
+        elif code == "324":  # Respuesta de modo de canal
+            channel = parts[3]
+            modes = ' '.join(parts[4:])
+            print(f"Modos actuales para {channel}: {modes}")
+        elif code == "311":  # Respuesta WHOIS con información del usuario
+            nickname = parts[3]
+            username = parts[4]
+            hostname = parts[5]
+            realname = ' '.join(parts[7:])[1:]
+            print(f"Usuario {nickname} ({realname}) está en {hostname}")
+        elif code == "319":  # Canales en los que el usuario está
+            nickname = parts[3]
+            channels = ' '.join(parts[4:])[1:]
+            print(f"{nickname} está en los canales {channels}")
