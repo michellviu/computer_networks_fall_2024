@@ -166,3 +166,30 @@ class IRCClient:
             nickname = parts[3]
             channels = ' '.join(parts[4:])[1:]
             print(f"{nickname} está en los canales {channels}")
+            
+    
+
+    def send_privmsg(self, target, message):
+        self.socket.sendall(f"PRIVMSG {target} :{message}\r\n".encode())
+    def join_channel(self, channel):
+        self.socket.sendall(f"JOIN {channel}\r\n".encode())
+    def leave_channel(self, channel):
+        self.socket.sendall(f"PART {channel}\r\n".encode())
+    def set_channel_mode(self, channel, mode):
+        self.socket.sendall(f"MODE {channel} {mode}\r\n".encode())
+    def send_notice(self, target, message):
+        self.socket.sendall(f"NOTICE {target} :{message}\r\n".encode())
+    def list_channels(self):
+        self.socket.sendall("LIST\r\n".encode())
+    def list_users_in_channel(self, channel=""):
+        if channel:
+            self.socket.sendall(f"NAMES {channel}\r\n".encode())
+        else:
+            self.socket.sendall("NAMES\r\n".encode())
+    def change_nickname(self, new_nickname):
+        self.socket.sendall(f"NICK {new_nickname}\r\n".encode())
+
+    def change_user_mode(self, nickname, mode):
+        self.socket.sendall(f"MODE {nickname} {mode}\r\n".encode())
+    def whois_query(self, nickname):
+        self.socket.sendall(f"WHOIS {nickname}\r\n".encode())
