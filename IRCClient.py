@@ -193,3 +193,131 @@ class IRCClient:
         self.socket.sendall(f"MODE {nickname} {mode}\r\n".encode())
     def whois_query(self, nickname):
         self.socket.sendall(f"WHOIS {nickname}\r\n".encode())
+        
+    
+    
+    def process_command(self, command):
+        parts = command.split(' ', 1)
+        cmd = parts[0].lower()
+
+        if cmd == "/join" and len(parts) > 1:
+            self.join_channel(parts[1])
+        elif cmd == "/part" and len(parts) > 1:
+            self.leave_channel(parts[1])
+        elif cmd == "/msg" and len(parts) > 1:
+            target_message = parts[1].split(' ', 1)
+            if len(target_message) > 1:
+                self.send_privmsg(target_message[0], target_message[1])
+        elif cmd == "/notice" and len(parts) > 1:
+            target_message = parts[1].split(' ', 1)
+            if len(target_message) > 1:
+                self.send_notice(target_message[0], target_message[1])
+        elif cmd == "/mode" and len(parts) > 1:
+            mode_args = parts[1].split(' ', 1)
+            if len(mode_args) > 1:
+                self.set_channel_mode(mode_args[0], mode_args[1])
+        elif cmd == "/list":
+            self.list_channels()
+        elif cmd == "/names":
+            if len(parts) > 1:
+                self.list_users_in_channel(parts[1])
+            else:
+                self.list_users_in_channel()
+        elif cmd == "/nick" and len(parts) > 1:
+            new_nickname = parts[1]
+            self.change_nickname(new_nickname)
+        elif cmd == "/whois" and len(parts) > 1:
+            nickname = parts[1]
+            self.whois_query(nickname)
+        else:
+            print("Comando desconocido o faltan argumentos.")
+
+
+
+    def receive_messages(self):
+        buffer = ""  # Búfer para acumular datos recibidos
+        while self.connected:
+            try:
+                data = self.socket.recv(4096)  # Recibe bytes del socket
+                if not data:
+                    continue  # Si no hay datos, continúa el bucle
+
+                # Decodifica y añade al búfer, manejando errores de decodificación
+                buffer += data.decode('utf-8', errors='replace')
+
+                # Procesa todos los mensajes completos que hay en el búfer
+                while "\r\n" in buffer:
+                    message, buffer = buffer.split("\r\n", 1)  # Separa el primer mensaje completo del buffer
+                    parts = message.split(" ")
+
+                    # Lógica para manejar diferentes tipos de mensajes basada en 'parts'
+                    if parts[0] == "PING":
+                        self.send_pong(parts[1])
+                    elif parts[1] in ["322", "323", "353", "366", "433", "431", "432", "311", "319", "324"]:
+                        self.handle_numeric_response(parts)
+                    elif parts[0].startswith(":") and parts[1] == "NICK":
+                        self.handle_nick_change(parts)
+                    elif parts[1] == "PRIVMSG":
+                        self.handle_privmsg(parts)
+                    elif parts[1] == "NOTICE":
+                        self.handle_notice(parts)
+                    elif parts[1] == "JOIN":
+                        self.handle_join(parts)
+                    elif parts[1] == "PART":
+                        self.handle_part(parts)
+                    elif parts[1] == "KICK":
+                        self.handle_kick(parts)
+                    elif parts[1] == "MODE":
+                        self.handle_mode(parts)
+
+
+                    print(message)  # Imprime todos los mensajes para depuración.
+
+            except UnicodeDecodeError as e:
+                print(f"Error de decodificación en la recepción de mensajes: {e}.")
+            except Exception as e:
+                print(f"Error al recibir mensaje: {e}.")
+                self.connected = False
+                break
+    
+    
+def main():
+    server_ip = input("Ingrese la dirección IP del servidor: ")
+    port = int(input("Ingrese el puerto: "))
+    nickname = input("Ingrese su apodo: ")
+    usarssl = input ("Ingrese 1 para usar conexión segura. Ingrese 2 para el caso contrario: ")
+
+    tmp = True
+    while tmp:
+        if usarssl == '1':
+            use_ssl = True
+            tmp = False
+        elif usarssl == '2':
+            use_ssl = False
+            tmp = False
+        else:
+            usarssl = input ("Ingrese 1 para usar conexión segura. Ingrese 2 para el caso contrario ")
+
+
+
+
+
+    irc_client = IRCClient(server_ip, port, nickname, use_ssl)
+    irc_client.connect()
+
+    if irc_client.connected:
+        print(f"Bienvenido, {nickname}!\n")
+        threading.Thread(target=irc_client.receive_messages, daemon=True).start()
+
+        while True:
+            user_input = input()
+            if user_input.startswith('/'):
+                irc_client.process_command(user_input)
+            else:
+                irc_client.send_message(user_input)
+
+    else:
+        print("No se pudo conectar al servidor. Por favor, vuelva a intentarlo más tarde.")
+
+if __name__ == "__main__":
+    main()
