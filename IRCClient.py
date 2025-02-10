@@ -30,6 +30,7 @@ class IRCClient:
     def connect(self):
        
          try:
+            print(f"Conectando a {self.host} en el puerto {self.port}...")
             self.socket.connect((self.host, self.port))
             self.connected = True
             # Enviar comandos NICK y USER según el protocolo IRC
