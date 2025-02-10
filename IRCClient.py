@@ -305,7 +305,6 @@ def main():
             port = int(arg)
         elif opt in ("-H", "--host"):
             server_ip = arg
-            print(server_ip)
         elif opt in ("-n", "--nick"):
             nickname = arg
         elif opt in ("-c", "--command"):
