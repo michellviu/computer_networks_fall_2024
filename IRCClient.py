@@ -28,20 +28,18 @@ class IRCClient:
             
     
     def connect(self):
-        attempts = 5
-        while attempts > 0:
+       
          try:
+            print(self.host)
             self.socket.connect((self.host, self.port))
             self.connected = True
             # Enviar comandos NICK y USER según el protocolo IRC
             self.socket.sendall(f"NICK {self.nickname}\r\n".encode())
             self.socket.sendall(f"USER {self.nickname} 0 * :Real name\r\n".encode())
          except Exception as e:
-           print(f"Error al conectar: {e}. Reintentando en 5 segundos...")
-           attempts -= 1
-           time.sleep(5)
-        self.connected = False
-        print("No se pudo conectar al servidor. Por favor, vuelva a intentarlo más tarde.")
+           self.connected = False
+           print("No se pudo conectar al servidor. Por favor, vuelva a intentarlo más tarde.")
+           print(e)
 
     def send_message(self, message):
         try:
@@ -308,6 +306,7 @@ def main():
             port = int(arg)
         elif opt in ("-H", "--host"):
             server_ip = arg
+            print(server_ip)
         elif opt in ("-n", "--nick"):
             nickname = arg
         elif opt in ("-c", "--command"):
@@ -345,14 +344,13 @@ def main():
                 irc_client.process_command(user_input)
             else:
                 irc_client.send_message(user_input)
-        # # while True:
-        # #     # user_input = input()
-        # user_input = f"{command} {argument}"
-            
-        # if user_input.startswith('/'):
-        #         irc_client.process_command(user_input)
-        # else:
-        #         irc_client.send_message(user_input)
+        else:        
+            while True:
+             user_input = input() 
+             if user_input.startswith('/'):
+                irc_client.process_command(user_input)
+             else:
+                irc_client.send_message(user_input)
 
     else:
         print("No se pudo conectar al servidor. Por favor, vuelva a intentarlo más tarde.")
