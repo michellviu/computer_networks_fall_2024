@@ -287,7 +287,7 @@ def main():
         server_ip = sys.argv[1]
         port = int(sys.argv[2])
         nickname = sys.argv[3]
-        use_ssl = sys.argv[4] == '1'
+        use_ssl = sys.argv[4] == '2'
     else:
         server_ip = input("Ingrese la dirección IP del servidor: ")
         port = int(input("Ingrese el puerto: "))
