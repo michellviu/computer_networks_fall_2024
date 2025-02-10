@@ -36,6 +36,7 @@ class IRCClient:
             self.socket.sendall(f"NICK {self.nickname}\r\n".encode())
             self.socket.sendall(f"USER {self.nickname} 0 * :Real name\r\n".encode())
          except Exception as e:
+           print("Error al conectar al servidor:", e)
            self.connected = False
            print("No se pudo conectar al servidor. Por favor, vuelva a intentarlo más tarde.")
 
