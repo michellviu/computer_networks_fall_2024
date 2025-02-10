@@ -314,20 +314,22 @@ def main():
             argument = arg
 
     if not server_ip or not port or not nickname:
-        print("Uso: IRCClient.py -H <host> -p <port> -n <nick> [-c <command>] [-a <argument>]")
-        sys.exit(2)
+       # Modo interactivo
+        server_ip = input("Ingrese la dirección IP del servidor: ")
+        port = int(input("Ingrese el puerto: "))
+        nickname = input("Ingrese su apodo: ")
+        usarssl = input("Ingrese 1 para usar conexión segura. Ingrese 2 para el caso contrario: ")
 
-    # tmp = True
-    # while tmp:
-    #     if usarssl == '1':
-    #         use_ssl = True
-    #         tmp = False
-    #     elif usarssl == '2':
-    #         use_ssl = False
-    #         tmp = False
-    #     else:
-    #         usarssl = input ("Ingrese 1 para usar conexión segura. Ingrese 2 para el caso contrario ")
-
+        tmp = True
+        while tmp:
+           if usarssl == '1':
+            use_ssl = True
+            tmp = False
+           elif usarssl == '2':
+            use_ssl = False
+            tmp = False
+           else:
+            usarssl = input ("Ingrese 1 para usar conexión segura. Ingrese 2 para el caso contrario ")
 
 
     irc_client = IRCClient(server_ip, port, nickname, use_ssl)
