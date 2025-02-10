@@ -332,17 +332,23 @@ def main():
     irc_client.connect()
 
     if irc_client.connected:
-        print(f"Bienvenido, {nickname}!\n")
+        # print(f"Bienvenido, {nickname}!\n")
         threading.Thread(target=irc_client.receive_messages, daemon=True).start()
-
-        # while True:
-        #     # user_input = input()
-        user_input = f"{command} {argument}"
-            
-        if user_input.startswith('/'):
+        
+        if command and argument:
+            user_input = f"{command} {argument}"
+            if user_input.startswith('/'):
                 irc_client.process_command(user_input)
-        else:
+            else:
                 irc_client.send_message(user_input)
+        # # while True:
+        # #     # user_input = input()
+        # user_input = f"{command} {argument}"
+            
+        # if user_input.startswith('/'):
+        #         irc_client.process_command(user_input)
+        # else:
+        #         irc_client.send_message(user_input)
 
     else:
         print("No se pudo conectar al servidor. Por favor, vuelva a intentarlo más tarde.")
