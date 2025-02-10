@@ -3,6 +3,7 @@ import ssl
 import threading
 import sys
 import getopt
+import time
 
 
 class IRCClient:
@@ -27,15 +28,20 @@ class IRCClient:
             
     
     def connect(self):
-        try:
+        attempts = 5
+        while attempts > 0:
+         try:
             self.socket.connect((self.host, self.port))
             self.connected = True
             # Enviar comandos NICK y USER según el protocolo IRC
             self.socket.sendall(f"NICK {self.nickname}\r\n".encode())
             self.socket.sendall(f"USER {self.nickname} 0 * :Real name\r\n".encode())
-        except Exception as e:
-            print("Error al conectar:", e)
-            self.connected = False
+         except Exception as e:
+           print(f"Error al conectar: {e}. Reintentando en 5 segundos...")
+           attempts -= 1
+           time.sleep(5)
+        self.connected = False
+        print("No se pudo conectar al servidor. Por favor, vuelva a intentarlo más tarde.")
 
     def send_message(self, message):
         try:
@@ -323,8 +329,6 @@ def main():
     #         tmp = False
     #     else:
     #         usarssl = input ("Ingrese 1 para usar conexión segura. Ingrese 2 para el caso contrario ")
-
-
 
 
 
