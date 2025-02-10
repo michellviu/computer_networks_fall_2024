@@ -2,4 +2,11 @@
 
 # Replace the next shell command with the entrypoint of your solution
 
-echo -e "127.0.0.1\n8080\nmichell\n2" | python3 IRCClient.py
+host="127.0.0.1"
+port="8080"
+nick="TestUser1"
+command="/nick"
+argument="NewNick"
+
+# Ejecutar el script IRCClient.py con los parámetros proporcionados
+python3 IRCClient.py -H "$host" -p "$port" -n "$nick" -c "$command" -a "$argument"

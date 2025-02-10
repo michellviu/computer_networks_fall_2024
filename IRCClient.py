@@ -2,6 +2,7 @@ import socket
 import ssl
 import threading
 import sys
+import getopt
 
 
 class IRCClient:
@@ -283,27 +284,45 @@ class IRCClient:
     
     
 def main():
-    if len(sys.argv) == 5:
-        server_ip = sys.argv[1]
-        port = int(sys.argv[2])
-        nickname = sys.argv[3]
-        use_ssl = sys.argv[4] == '2'
-    else:
-        server_ip = input("Ingrese la dirección IP del servidor: ")
-        port = int(input("Ingrese el puerto: "))
-        nickname = input("Ingrese su apodo: ")
-        usarssl = input("Ingrese 1 para usar conexión segura. Ingrese 2 para el caso contrario: ")
+    try:
+        opts, args = getopt.getopt(sys.argv[1:], "H:p:n:c:a:", ["port=", "host=", "nick=", "command=", "argument="])
+    except getopt.GetoptError as err:
+        print(str(err))
+        sys.exit(2)
 
-    tmp = True
-    while tmp:
-        if usarssl == '1':
-            use_ssl = True
-            tmp = False
-        elif usarssl == '2':
-            use_ssl = False
-            tmp = False
-        else:
-            usarssl = input ("Ingrese 1 para usar conexión segura. Ingrese 2 para el caso contrario ")
+    server_ip = None
+    port = None
+    nickname = None
+    command = None
+    argument = None
+    use_ssl = False
+
+    for opt, arg in opts:
+        if opt in ("-p", "--port"):
+            port = int(arg)
+        elif opt in ("-H", "--host"):
+            server_ip = arg
+        elif opt in ("-n", "--nick"):
+            nickname = arg
+        elif opt in ("-c", "--command"):
+            command = arg
+        elif opt in ("-a", "--argument"):
+            argument = arg
+
+    if not server_ip or not port or not nickname:
+        print("Uso: IRCClient.py -H <host> -p <port> -n <nick> [-c <command>] [-a <argument>]")
+        sys.exit(2)
+
+    # tmp = True
+    # while tmp:
+    #     if usarssl == '1':
+    #         use_ssl = True
+    #         tmp = False
+    #     elif usarssl == '2':
+    #         use_ssl = False
+    #         tmp = False
+    #     else:
+    #         usarssl = input ("Ingrese 1 para usar conexión segura. Ingrese 2 para el caso contrario ")
 
 
 
@@ -316,11 +335,13 @@ def main():
         print(f"Bienvenido, {nickname}!\n")
         threading.Thread(target=irc_client.receive_messages, daemon=True).start()
 
-        while True:
-            user_input = input()
-            if user_input.startswith('/'):
+        # while True:
+        #     # user_input = input()
+        user_input = f"{command} {argument}"
+            
+        if user_input.startswith('/'):
                 irc_client.process_command(user_input)
-            else:
+        else:
                 irc_client.send_message(user_input)
 
     else:
