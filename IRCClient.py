@@ -1,6 +1,7 @@
 import socket
 import ssl
 import threading
+import sys
 
 
 class IRCClient:
@@ -282,10 +283,16 @@ class IRCClient:
     
     
 def main():
-    server_ip = input("Ingrese la dirección IP del servidor: ")
-    port = int(input("Ingrese el puerto: "))
-    nickname = input("Ingrese su apodo: ")
-    usarssl = input ("Ingrese 1 para usar conexión segura. Ingrese 2 para el caso contrario: ")
+    if len(sys.argv) == 5:
+        server_ip = sys.argv[1]
+        port = int(sys.argv[2])
+        nickname = sys.argv[3]
+        use_ssl = sys.argv[4] == '1'
+    else:
+        server_ip = input("Ingrese la dirección IP del servidor: ")
+        port = int(input("Ingrese el puerto: "))
+        nickname = input("Ingrese su apodo: ")
+        usarssl = input("Ingrese 1 para usar conexión segura. Ingrese 2 para el caso contrario: ")
 
     tmp = True
     while tmp:
