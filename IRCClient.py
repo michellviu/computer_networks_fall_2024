@@ -38,17 +38,28 @@ class IRCClient:
          except Exception as e:
            print("Error al conectar al servidor:", e)
            self.connected = False
+    
+    def disconnect(self, message=""):
+        if self.connected:
+            if message:
+                self.socket.sendall(f"QUIT :{message}\r\n".encode())
+            else:
+                self.socket.sendall("QUIT\r\n".encode())
+            self.socket.close()
+            self.connected = False
+            print("Desconectado del servidor.")
 
 
     def send_message(self, message):
         try:
             self.socket.sendall(f"{message}\r\n".encode())
+            print(f"Tú: {message}")
         except Exception as e:
             print("Error al enviar mensaje:", e)
             
     
-    def send_pong(self, data):
-        self.socket.sendall(f"PONG {data}\r\n".encode())
+    def send_pong(self, server):
+        self.socket.sendall(f"PONG {server}\r\n".encode())
             
             
     def handle_privmsg(self, parts):
@@ -79,19 +90,18 @@ class IRCClient:
             print(f"Mensaje directo de {sender}: {message}")
 
     def handle_notice(self, parts):
-        full_msg = " ".join(parts)
-        sender = full_msg[1:full_msg.find('!')]
-        message_start = full_msg.find(':', 1)
-        message = full_msg[message_start + 1:]
-        print(f"Notice de {sender}: {message}")
+        sender = parts[0][1:].split('!')[0]
+        target = parts[2]
+        message = ' '.join(parts[3:])[1:]
+        print(f"Notificación de {sender} a {target}: {message}")
 
     def handle_join(self, parts):
-        user_info = parts[0][1:]
+        user_info = parts[0].split('!')[0][1:]
         channel = parts[2].strip() if parts[2].startswith(':') else parts[2]
         print(f"{user_info} se ha unido a {channel}")
 
     def handle_part(self, parts):
-        user_info = parts[0][1:]
+        user_info = parts[0].split('!')[0][1:]
         channel = parts[2].strip() if parts[2].startswith(':') else parts[2]
         print(f"{user_info} ha dejado {channel}")
 
@@ -116,7 +126,7 @@ class IRCClient:
         new_nick = parts[2].lstrip(':')
         if old_nick == self.nickname:
             self.nickname = new_nick  # Actualiza el nickname almacenado
-            print(f"Tu nickname ha sido cambiado a {new_nick}.")
+            print(f"Tu nuevo apodo es {new_nick}.")
         else:
             print(f"{old_nick} ahora es conocido como {new_nick}.")
             
@@ -153,6 +163,8 @@ class IRCClient:
             print(f"Fin de la lista de usuarios en {channel}.")
         elif code == "433":
             print("El nickname deseado está en uso o es inválido.")
+        elif code == "482":
+            print("No tienes permiso para cambiar el modo del canal.")
         elif code == "431":  # Sin nickname dado
             print("No se ha proporcionado un nickname.")
         elif code == "432":  # Erroneous Nickname
@@ -171,11 +183,48 @@ class IRCClient:
             nickname = parts[3]
             channels = ' '.join(parts[4:])[1:]
             print(f"{nickname} está en los canales {channels}")
-            
+        elif code == "332": # Respuesta de tema de canal
+            channel = parts[3]
+            topic = ' '.join(parts[4:])[1:]
+            print(f"Tema de {channel}: {topic}")
+        elif code == "352":  # Respuesta a WHO
+            channel = parts[3]
+            user = parts[7]
+            host = parts[4]
+            server = parts[5]
+            nick = parts[7]
+            realname = ' '.join(parts[10:])[1:]
+            print(f"Usuario en {channel}: {nick} ({realname}) - Host: {host} - Servidor: {server}")
+        elif code == "315":  # Fin de la lista WHO
+            channel = parts[3]
+            print(f"Fin de la lista WHO para {channel}.")
+        elif code == "314":  # Respuesta a WHOWAS
+            nickname = parts[3]
+            username = parts[4]
+            host = parts[5]
+            realname = ' '.join(parts[7:])[1:]
+            print(f"WHOWAS {nickname}: {username}@{host} ({realname})")
+        elif code == "369":  # Fin de la lista WHOWAS
+            nickname = parts[3]
+            print(f"Fin de la lista WHOWAS para {nickname}.")
+        
+    
+    
+    def handle_quit(self, parts):
+     user_info = parts[0].split('!')[0][1:]
+     channel = parts[2].strip() if parts[2].startswith(':') else parts[2]
+     print(f"{user_info} se ha desconectado. Mensaje: {channel}")
+    
+    
+    def handle_topic(self, parts):
+        channel = parts[2]
+        topic = ' '.join(parts[3:])[1:]
+        print(f"El tema del canal {channel} ha sido cambiado a: {topic}")
     
 
     def send_privmsg(self, target, message):
-        self.socket.sendall(f"PRIVMSG {target} :{message}\r\n".encode())
+        self.socket.sendall(f"PRIVMSG {target} {message}\r\n".encode())
+        print(f"Tú a {target}: {message}")  # Muestra el mensaje que envías
     def join_channel(self, channel):
         self.socket.sendall(f"JOIN {channel}\r\n".encode())
     def leave_channel(self, channel):
@@ -184,6 +233,7 @@ class IRCClient:
         self.socket.sendall(f"MODE {channel} {mode}\r\n".encode())
     def send_notice(self, target, message):
         self.socket.sendall(f"NOTICE {target} :{message}\r\n".encode())
+        print(f"Tú (NOTICE) a {target}: {message}")  # Muestra el mensaje que envías
     def list_channels(self):
         self.socket.sendall("LIST\r\n".encode())
     def list_users_in_channel(self, channel=""):
@@ -198,7 +248,21 @@ class IRCClient:
         self.socket.sendall(f"MODE {nickname} {mode}\r\n".encode())
     def whois_query(self, nickname):
         self.socket.sendall(f"WHOIS {nickname}\r\n".encode())
-        
+    
+    def send_topic(self, channel, topic=None):
+        if topic:
+            self.socket.sendall(f"TOPIC {channel} :{topic}\r\n".encode())
+        else:
+            self.socket.sendall(f"TOPIC {channel}\r\n".encode())
+    
+    def send_who(self, channel):
+        self.socket.sendall(f"WHO {channel}\r\n".encode())
+    
+    def send_whowas(self, nickname):
+        self.socket.sendall(f"WHOWAS {nickname}\r\n".encode())
+    
+    def send_ping(self, server):
+        self.socket.sendall(f"PING {server}\r\n".encode())
     
     
     def process_command(self, command):
@@ -209,7 +273,7 @@ class IRCClient:
             self.join_channel(parts[1])
         elif cmd == "/part" and len(parts) > 1:
             self.leave_channel(parts[1])
-        elif cmd == "/msg" and len(parts) > 1:
+        elif cmd == "/privmsg" and len(parts) > 1:
             target_message = parts[1].split(' ', 1)
             if len(target_message) > 1:
                 self.send_privmsg(target_message[0], target_message[1])
@@ -234,6 +298,27 @@ class IRCClient:
         elif cmd == "/whois" and len(parts) > 1:
             nickname = parts[1]
             self.whois_query(nickname)
+        elif cmd == "/who" and len(parts) > 1:
+            channel = parts[1]
+            self.send_who(channel)
+        elif cmd == "/whowas" and len(parts) > 1:
+            nickname = parts[1]
+            self.send_whowas(nickname)
+        elif cmd == "/topic" and len(parts) > 1:
+            topic_args = parts[1].split(' ', 1)
+            if len(topic_args) > 1:
+                self.send_topic(topic_args[0], topic_args[1])
+            else:
+                self.send_topic(topic_args[0])
+        elif cmd == "/ping" and len(parts) > 1:
+            server = parts[1]
+            self.send_ping(server)
+        elif cmd == "/pong" and len(parts) > 1:
+            server = parts[1]
+            self.send_pong(server)
+        elif cmd == "/quit":
+            message = parts[1] if len(parts) > 1 else ""
+            self.disconnect(message)
         else:
             print("Comando desconocido o faltan argumentos.")
 
@@ -258,7 +343,7 @@ class IRCClient:
                     # Lógica para manejar diferentes tipos de mensajes basada en 'parts'
                     if parts[0] == "PING":
                         self.send_pong(parts[1])
-                    elif parts[1] in ["322", "323", "353", "366", "433", "431", "432", "311", "319", "324"]:
+                    elif parts[1] in ["322","482", "323","352","315","314","369","332", "353", "366", "433", "431", "432", "311", "319", "324"]:
                         self.handle_numeric_response(parts)
                     elif parts[0].startswith(":") and parts[1] == "NICK":
                         self.handle_nick_change(parts)
@@ -274,9 +359,14 @@ class IRCClient:
                         self.handle_kick(parts)
                     elif parts[1] == "MODE":
                         self.handle_mode(parts)
+                    elif parts[1] == "QUIT":
+                        self.handle_quit(parts)
+                    elif parts[1] == "TOPIC":
+                        self.handle_topic(parts)
+                    
 
 
-                    print(message)  # Imprime todos los mensajes para depuración.
+                #    print(message)  # Imprime todos los mensajes para depuración.
 
             except UnicodeDecodeError as e:
                 print(f"Error de decodificación en la recepción de mensajes: {e}.")
@@ -332,7 +422,6 @@ def main():
 
 
     irc_client = IRCClient(server_ip, port, nickname, use_ssl)
-    print(server_ip, port, nickname, use_ssl)
     irc_client.connect()
 
     if irc_client.connected:
@@ -346,7 +435,7 @@ def main():
             else:
                 irc_client.send_message(user_input)
         else:        
-            while True:
+            while irc_client.connected:
              user_input = input() 
              if user_input.startswith('/'):
                 irc_client.process_command(user_input)
