@@ -30,7 +30,6 @@ class IRCClient:
     def connect(self):
        
          try:
-            print(self.host)
             self.socket.connect((self.host, self.port))
             self.connected = True
             # Enviar comandos NICK y USER según el protocolo IRC
@@ -39,7 +38,7 @@ class IRCClient:
          except Exception as e:
            self.connected = False
            print("No se pudo conectar al servidor. Por favor, vuelva a intentarlo más tarde.")
-           print(e)
+
 
     def send_message(self, message):
         try:
