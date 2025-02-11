@@ -266,6 +266,17 @@ class IRCClient:
     def send_ping(self, server):
         self.socket.sendall(f"PING {server}\r\n".encode())
     
+    def send_kick(self, channel, user, reason=""):
+        if reason:
+            self.socket.sendall(f"KICK {channel} {user} :{reason}\r\n".encode())
+        else:
+            self.socket.sendall(f"KICK {channel} {user}\r\n".encode())
+        print(f"Has expulsado a {user} del canal {channel}. Razón: {reason}")
+    
+    def send_invite(self, user, channel):
+        self.socket.sendall(f"INVITE {user} {channel}\r\n".encode())
+        print(f"Has invitado a {user} al canal {channel}")
+    
     
     def process_command(self, command):
         parts = command.split(' ', 1)
@@ -318,6 +329,16 @@ class IRCClient:
         elif cmd == "/pong" and len(parts) > 1:
             server = parts[1]
             self.send_pong(server)
+        elif cmd == "/kick" and len(parts) > 1:
+            kick_args = parts[1].split(' ', 2)
+            if len(kick_args) > 2:
+                self.send_kick(kick_args[0], kick_args[1], kick_args[2])
+            elif len(kick_args) > 1:
+                self.send_kick(kick_args[0], kick_args[1])
+        elif cmd == "/invite" and len(parts) > 1:
+            invite_args = parts[1].split(' ', 1)
+            if len(invite_args) > 1:
+                self.send_invite(invite_args[0], invite_args[1])
         elif cmd == "/quit":
             message = parts[1] if len(parts) > 1 else ""
             self.disconnect(message)
