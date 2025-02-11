@@ -94,7 +94,7 @@ class IRCClient:
         sender = parts[0][1:].split('!')[0]
         target = parts[2]
         message = ' '.join(parts[3:])[1:]
-        print(f"Notificación de {sender} a {target}: {message}")
+        print(f"Notificación de {sender}: {target} {message}")
 
     def handle_join(self, parts):
         user_info = parts[0].split('!')[0][1:]
@@ -234,7 +234,7 @@ class IRCClient:
         self.socket.sendall(f"MODE {channel} {mode}\r\n".encode())
     def send_notice(self, target, message):
         self.socket.sendall(f"NOTICE {target} :{message}\r\n".encode())
-        print(f"Tú (NOTICE) a {target}: {message}")  # Muestra el mensaje que envías
+        print(f"Notificación de {self.nickname}: {target} {message}")  # Muestra el mensaje que envías
     def list_channels(self):
         self.socket.sendall("LIST\r\n".encode())
     def list_users_in_channel(self, channel=""):
@@ -244,6 +244,7 @@ class IRCClient:
             self.socket.sendall("NAMES\r\n".encode())
     def change_nickname(self, new_nickname):
         self.socket.sendall(f"NICK {new_nickname}\r\n".encode())
+        print(f"Tu nuevo apodo es {new_nickname}.")
 
     def change_user_mode(self, nickname, mode):
         self.socket.sendall(f"MODE {nickname} {mode}\r\n".encode())
