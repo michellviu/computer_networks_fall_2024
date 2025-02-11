@@ -225,7 +225,7 @@ class IRCClient:
 
     def send_privmsg(self, target, message):
         self.socket.sendall(f"PRIVMSG {target} {message}\r\n".encode())
-        print(f"Tú a {target}: {message}")  # Muestra el mensaje que envías
+        print(f"Mensaje privado de {self.nickname}: {target} {message}")  # Muestra el mensaje que envías
     def join_channel(self, channel):
         self.socket.sendall(f"JOIN {channel}\r\n".encode())
         print(f"Te has unido al canal {channel}")
@@ -234,6 +234,7 @@ class IRCClient:
         print(f"Has salido del canal {channel}")
     def set_channel_mode(self, channel, mode):
         self.socket.sendall(f"MODE {channel} {mode}\r\n".encode())
+        print(f"Has cambiado el modo de {channel} a {mode}")
     def send_notice(self, target, message):
         self.socket.sendall(f"NOTICE {target} :{message}\r\n".encode())
         print(f"Notificacion de {self.nickname}: {target} {message}")  # Muestra el mensaje que envías
