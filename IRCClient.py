@@ -31,6 +31,7 @@ class IRCClient:
        
          try:
             print(f"Conectando al servidor {self.host}:{self.port}...")
+            time.sleep(5)
             self.socket.connect((self.host, self.port))
             print(f"Conectado al servidor {self.host}:{self.port}.")
             self.connected = True
