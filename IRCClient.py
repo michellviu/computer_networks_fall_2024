@@ -228,13 +228,15 @@ class IRCClient:
         print(f"Tú a {target}: {message}")  # Muestra el mensaje que envías
     def join_channel(self, channel):
         self.socket.sendall(f"JOIN {channel}\r\n".encode())
+        print(f"Te has unido al canal {channel}")
     def leave_channel(self, channel):
         self.socket.sendall(f"PART {channel}\r\n".encode())
+        print(f"Has salido del canal {channel}")
     def set_channel_mode(self, channel, mode):
         self.socket.sendall(f"MODE {channel} {mode}\r\n".encode())
     def send_notice(self, target, message):
         self.socket.sendall(f"NOTICE {target} :{message}\r\n".encode())
-        print(f"Notificación de {self.nickname}: {target} {message}")  # Muestra el mensaje que envías
+        print(f"Notificacion de {self.nickname}: {target} {message}")  # Muestra el mensaje que envías
     def list_channels(self):
         self.socket.sendall("LIST\r\n".encode())
     def list_users_in_channel(self, channel=""):
